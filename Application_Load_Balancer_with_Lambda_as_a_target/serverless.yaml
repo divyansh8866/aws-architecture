@@ -1,0 +1,94 @@
+service: alb-lambda-serverless
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: us-east-1
+
+resources:
+  Resources:
+    MyVPC:
+      Type: AWS::EC2::VPC
+      Properties:
+        CidrBlock: "10.0.0.0/16"
+        EnableDnsSupport: true
+        EnableDnsHostnames: true
+        Tags:
+          - Key: Name
+            Value: MyVPC
+
+    MyLoadBalancerSG:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Security group for ALB
+        VpcId:
+          Ref: MyVPC
+        SecurityGroupIngress:
+          - IpProtocol: tcp
+            FromPort: 80
+            ToPort: 80
+            CidrIp: 0.0.0.0/0
+
+    MyLoadBalancer:
+      Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+      Properties:
+        Name: MyLoadBalancer
+        Scheme: internet-facing
+        Subnets:
+          - !Ref MyVPC
+        SecurityGroups:
+          - !Ref MyLoadBalancerSG
+
+    LambdaFunction:
+      Type: AWS::Lambda::Function
+      Properties:
+        Handler: index.handler
+        Role: arn:aws:iam::XXXXXXXXXXXX:role/lambda-role  # Replace with your Lambda execution role ARN
+        Code:
+          S3Bucket: my-bucket
+          S3Key: lambda.zip  # Replace with the path to your Lambda deployment package
+        Runtime: nodejs14.x
+
+    MyLoadBalancerListener:
+      Type: AWS::ElasticLoadBalancingV2::Listener
+      Properties:
+        DefaultActions:
+          - Type: fixed-response
+            FixedResponseConfig:
+              StatusCode: '200'
+        LoadBalancerArn:
+          Ref: MyLoadBalancer
+        Port: 80
+        Protocol: HTTP
+
+    MyLoadBalancerTargetGroup:
+      Type: AWS::ElasticLoadBalancingV2::TargetGroup
+      Properties:
+        HealthCheckIntervalSeconds: 30
+        HealthCheckPath: "/"
+        HealthCheckPort: 80
+        HealthCheckProtocol: HTTP
+        Matcher:
+          HttpCode: "200"
+        Port: 80
+        Protocol: HTTP
+        Targets:
+          - Id:
+              Ref: LambdaFunction
+            Port: 80
+
+    LambdaPermissionForALB:
+      Type: AWS::Lambda::Permission
+      Properties:
+        Action: lambda:InvokeFunction
+        FunctionName:
+          Ref: LambdaFunction
+        Principal: elasticloadbalancing.amazonaws.com
+        SourceArn:
+          Fn::GetAtt: [MyLoadBalancer, LoadBalancerArn]
+
+outputs:
+  ALBUrl:
+    Value:
+      Fn::GetAtt: [MyLoadBalancer, DNSName]
+    Description: URL of the Application Load Balancer
