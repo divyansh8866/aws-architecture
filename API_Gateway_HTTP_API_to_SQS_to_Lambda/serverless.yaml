@@ -1,0 +1,102 @@
+service: my-serverless-service
+
+provider:
+  name: aws
+  runtime: python3.11
+  stage: dev
+  region: us-east-1
+
+functions:
+  sqsLambdaFunction:
+    handler: src/index.handler
+    description: Lambda to be invoked by the SQS Queue
+    timeout: 30
+    memorySize: 512
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt: [MySqsQueue, Arn]
+          batchSize: 10
+
+resources:
+  Resources:
+    MySqsQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: MySqsQueue
+
+    MyHttpApi:
+      Type: AWS::Serverless::HttpApi
+      Properties:
+        AccessLogSettings:
+          DestinationArn:
+            Fn::GetAtt: [MyHttpApiAccessLogs, Arn]
+          Format: '{ "requestId":"$context.requestId", "ip": "$context.identity.sourceIp", "requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod","routeKey":"$context.routeKey", "status":"$context.status","protocol":"$context.protocol", "responseLength":"$context.responseLength" }'
+        DefinitionBody:
+          Fn::Transform:
+            Name: 'AWS::Include'
+            Parameters:
+              Location: 'api.yaml'
+
+    MyHttpApiAccessLogs:
+      Type: AWS::Logs::LogGroup
+      Properties:
+        LogGroupName: MyHttpApi-Access-Logs
+        RetentionInDays: 1
+
+    MyHttpApiRole:
+      Type: 'AWS::IAM::Role'
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - apigateway.amazonaws.com
+              Action:
+                - 'sts:AssumeRole'
+        Policies:
+          - PolicyName: AllowSqsIntegration
+            PolicyDocument:
+              Version: 2012-10-17
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - 'sqs:SendMessage'
+                    - 'sqs:GetQueueUrl'
+                    - 'sqs:SendMessageBatch'
+                  Resource: 
+                    Fn::GetAtt: [MySqsQueue, Arn]
+                - Effect: Allow
+                  Action:
+                    - 'logs:CreateLogGroup'
+                    - 'logs:CreateLogStream'
+                    - 'logs:DescribeLogGroups'
+                    - 'logs:DescribeLogStreams'
+                    - 'logs:PutLogEvents'
+                    - 'logs:GetLogEvents'
+                    - 'logs:FilterLogEvents'
+                  Resource: 
+                    Fn::GetAtt: [MyHttpApiAccessLogs, Arn]
+
+outputs:
+  MyHttpApiEndpoint:
+    Description: "HTTP API endpoint"
+    Value: 
+      Fn::Sub: "https://${MyHttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+
+  SQSLambdaFunction:
+    Description: SQSLambdaFunction function name
+    Value: 
+      Ref: sqsLambdaFunction
+
+  MySqsQueueARN:
+    Description: SQS queue ARN
+    Value: 
+      Fn::GetAtt: [MySqsQueue, Arn]
+
+  MySqsQueueURL:
+    Description: SQS queue URL
+    Value: 
+      Ref: MySqsQueue
