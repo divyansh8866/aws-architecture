@@ -1,0 +1,70 @@
+service: sns-to-s3-pipeline
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  region: us-east-1
+  runtime: python3.10
+  versionFunctions: false
+  iam:
+    role: <change_here>
+  architecture: x86_64
+  # deploymentBucket:
+  #   name: <change-name-here>
+  stackTags:
+    pipeline: sns-to-s3
+    
+useDotenv: true
+
+plugins:
+  - serverless-lift
+
+resources:
+  Resources:
+  # Disable if you dont want to create new SNS Topic and use existing one.
+    SnsTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: sns-to-s3-topic # Change the name as needed
+
+    SnsSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        TopicArn:
+          Ref: SnsTopic
+        # add the arn of the existing sns  that need to be subscribed
+        # TopicArn: <change_here> 
+        Protocol: sqs
+        Endpoint: ${construct:queue-s3.queueArn}
+
+constructs:
+  queue-s3: # Following function will create SQS, DLQ, Lambda for putting data to S3
+    type: queue
+    batchSize: 10
+    maxRetries: 2
+    maxBatchingWindow: 10
+    worker:
+      handler: handler.lambda_handler
+      name: sns-to-s3-pipeline
+      role: <change_here>
+      environment:
+        DI_AWS_ACCESS_KEY: <change_here>
+        DI_AWS_SECRET_KEY: <change_here>
+        DI_AWS_REGION_NAME: us-east-1
+        DATA_BUCKET_NAME: <change_here>
+        DEBUG:  True
+      reservedConcurrency: 6
+      timeout: 300
+      memorySize: 300
+    extensions:
+      queue:
+        Properties:
+          Tags:
+            - Key: role
+              Value: messaging
+      dlq:
+        Properties:
+          Tags:
+            - Key: role
+              Value: messaging
