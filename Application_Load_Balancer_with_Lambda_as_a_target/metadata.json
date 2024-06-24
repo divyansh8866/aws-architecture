@@ -1,0 +1,4 @@
+{
+    "tags":["S3", "Lambda", "ALB", "AWS", "Serverless"],
+    "github":"https://github.com/divyansh8866/aws-architecture/tree/main/Application_Load_Balancer_with_Lambda_as_a_target"
+}

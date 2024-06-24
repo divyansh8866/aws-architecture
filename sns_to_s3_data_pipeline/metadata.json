@@ -1,0 +1,4 @@
+{
+    "tags":["S3", "SNS", "AWS", "Serverless"],
+    "github":"https://github.com/divyansh8866/aws-architecture/tree/main/sns_to_s3_data_pipeline"
+}

@@ -1,0 +1,4 @@
+{
+    "tags":["S3", "Lambda", "SQS", "AWS", "Serverless"],
+    "github":"https://github.com/divyansh8866/aws-architecture/tree/main/API_Gateway_HTTP_API_to_SQS_to_Lambda"
+}
