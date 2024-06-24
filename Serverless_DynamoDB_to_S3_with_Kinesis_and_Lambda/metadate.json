@@ -1,0 +1,4 @@
+{
+    "tags":["S3", "Lambda", "AWS", "Kinesis", "dynamodb", "Serverless"],
+    "github":"https://github.com/divyansh8866/aws-architecture/tree/main/Serverless_DynamoDB_to_S3_with_Kinesis_and_Lambda"
+}

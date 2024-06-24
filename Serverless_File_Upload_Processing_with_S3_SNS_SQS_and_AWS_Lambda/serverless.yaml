@@ -1,0 +1,84 @@
+service: file-upload-processor
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: us-east-1
+
+functions:
+  processFile1:
+    handler: handler.process_file_1
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - FileQueue1
+              - Arn
+
+  processFile2:
+    handler: handler.process_file_2
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - FileQueue2
+              - Arn
+
+resources:
+  Resources:
+    FileBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: bucket-raw-files
+
+    SNSNotificationTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: FileUploadTopic
+
+    FileQueue1:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: FileQueue1
+
+    FileQueue2:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: FileQueue2
+
+    FileBucketNotification:
+      Type: AWS::S3::BucketNotification
+      Properties:
+        Bucket: { Ref: FileBucket }
+        NotificationConfiguration:
+          TopicConfigurations:
+            - Event: s3:ObjectCreated:*
+              Topic: { Ref: SNSNotificationTopic }
+
+    SNSQueueSubscription1:
+      Type: AWS::SNS::Subscription
+      Properties:
+        TopicArn: { Ref: SNSNotificationTopic }
+        Protocol: sqs
+        Endpoint: { "Fn::GetAtt": [ "FileQueue1", "Arn" ] }
+
+    SNSQueueSubscription2:
+      Type: AWS::SNS::Subscription
+      Properties:
+        TopicArn: { Ref: SNSNotificationTopic }
+        Protocol: sqs
+        Endpoint: { "Fn::GetAtt": [ "FileQueue2", "Arn" ] }
+
+  Outputs:
+    FileBucketArn:
+      Description: "ARN of the S3 bucket"
+      Value: { "Fn::GetAtt": [ "FileBucket", "Arn" ] }
+    SNSNotificationTopicArn:
+      Description: "ARN of the SNS topic"
+      Value: { "Ref": "SNSNotificationTopic" }
+    FileQueue1Arn:
+      Description: "ARN of the SQS queue 1"
+      Value: { "Fn::GetAtt": [ "FileQueue1", "Arn" ] }
+    FileQueue2Arn:
+      Description: "ARN of the SQS queue 2"
+      Value: { "Fn::GetAtt": [ "FileQueue2", "Arn" ] }

@@ -1,0 +1,49 @@
+service: file-processing-service
+
+provider:
+  name: aws
+  runtime: python3.8
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+        - s3:PutObject
+        - s3:ListBucket
+      Resource: 
+        - arn:aws:s3:::your-raw-files-bucket-name
+        - arn:aws:s3:::your-raw-files-bucket-name/*
+        - arn:aws:s3:::your-processed-files-bucket-name
+        - arn:aws:s3:::your-processed-files-bucket-name/*
+
+functions:
+  processFile:
+    handler: handler.process_file
+    events:
+      - s3:
+          bucket: your-raw-files-bucket-name
+          event: s3:ObjectCreated:*
+          rules:
+            - prefix: raw_files/
+          existing: true
+
+resources:
+  Resources:
+    RawFilesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: your-raw-files-bucket-name
+        NotificationConfiguration:
+          LambdaConfigurations:
+            - Event: "s3:ObjectCreated:*"
+              Function: 
+                "Fn::GetAtt": [ "ProcessFileLambdaFunction", "Arn" ]
+    ProcessedFilesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: your-processed-files-bucket-name
+
+  Outputs:
+    ProcessFileLambdaFunctionArn:
+      Description: "ARN of the Lambda function that processes files"
+      Value: 
+        "Fn::GetAtt": [ "ProcessFileLambdaFunction", "Arn" ]

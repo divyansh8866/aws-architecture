@@ -1,0 +1,4 @@
+{
+    "tags":["S3", "Lambda", "AWS", "SQS", "SNS",  "Serverless"],
+    "github":"https://github.com/divyansh8866/aws-architecture/tree/main/Serverless_File_Upload_Processing_with_S3_SNS_SQS_and_AWS_Lambda"
+}

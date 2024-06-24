@@ -1,0 +1,67 @@
+service: file-processing-service
+
+provider:
+  name: aws
+  runtime: python3.8
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - s3:GetObject
+        - s3:PutObject
+        - s3:ListBucket
+        - sqs:ReceiveMessage
+        - sqs:DeleteMessage
+        - sqs:GetQueueAttributes
+      Resource: 
+        - arn:aws:s3:::your-raw-files-bucket-name
+        - arn:aws:s3:::your-raw-files-bucket-name/*
+        - arn:aws:s3:::your-processed-files-bucket-name
+        - arn:aws:s3:::your-processed-files-bucket-name/*
+        - arn:aws:sqs:us-east-1:*:your-sqs-queue-name
+
+functions:
+  processFile:
+    handler: handler.process_file
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - FileProcessingQueue
+              - Arn
+          batchSize: 10
+
+resources:
+  Resources:
+    RawFilesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: your-raw-files-bucket-name
+        NotificationConfiguration:
+          QueueConfigurations:
+            - Event: "s3:ObjectCreated:*"
+              Queue: 
+                Ref: FileProcessingQueue
+              Filter:
+                S3Key:
+                  Rules:
+                    - Name: prefix
+                      Value: raw_files/
+    ProcessedFilesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: your-processed-files-bucket-name
+
+    FileProcessingQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: your-sqs-queue-name
+
+  Outputs:
+    ProcessFileLambdaFunctionArn:
+      Description: "ARN of the Lambda function that processes files"
+      Value: 
+        "Fn::GetAtt": [ "ProcessFileLambdaFunction", "Arn" ]
+    FileProcessingQueueUrl:
+      Description: "URL of the SQS queue"
+      Value:
+        Ref: FileProcessingQueue
