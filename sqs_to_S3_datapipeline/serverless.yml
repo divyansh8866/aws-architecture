@@ -1,0 +1,56 @@
+service: datapipeline_using_serverless
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.7
+  timeout: 10
+  iam:
+    role: ""
+  deploymentBucket:
+    name: ""
+  stackTags:
+    product: """"
+    env: qa
+    created-date: 2022-05-18
+    team: python-dev
+    customer-impact: false
+    terraform: false
+
+
+constructs:
+  ingestion:
+    type: queue
+    maxBatchingWindow: 10
+    batchSize: 1
+    maxRetries: 2
+    worker:
+      handler: handler.lambda_handeler
+      name: ""
+      runetime: python3.7
+      reservedConcurrency: 3
+      timeout: 600
+      environment: 
+        URL : ChangeHere
+        TOKEN : ChangeHere
+        SQLSERVER : ChangeHere
+        SQLDATABASE : ChangeHere
+        UDI : ChangeHere
+        PWD : ChangeHere
+        MAXTRIES : 3
+
+      layers:
+        - arn
+        - arn
+      vpc: ""
+
+package:
+  exclude:
+    - project_diagram.drawio
+    - package-lock.json
+    - package.json
+    - node_modules/**
+    - doc/**
+plugins:
+  - serverless-lift

@@ -1,0 +1,4 @@
+{
+    "tags":["SQS", "Lambda", "AWS", "SQL", "Serverless"],
+    "github":"https://github.com/divyansh8866/aws-architecture/tree/main/sqs_to_S3_datapipeline"
+}
