@@ -1,0 +1,38 @@
+service: aws-monitoring
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "logs:CreateLogGroup"
+            - "logs:CreateLogStream"
+            - "logs:PutLogEvents"
+          Resource:
+            - "arn:aws:logs:us-east-1:${self:custom.accountId}:*"
+            - "arn:aws:logs:us-east-1:${self:custom.accountId}:log-group:/aws/lambda/aws_monitoring:*"
+        - Effect: "Allow"
+          Action:
+            - "ce:*"
+            - "budgets:*"
+          Resource: "*"
+
+functions:
+  fetchBillingInfo:
+    handler: handler.lambda_handler
+    events:
+      - schedule:
+          rate: rate(1 day)
+          enabled: true
+
+custom:
+  accountId: YOUR_ACCOUNT_ID
+
+# Plugins
+plugins:
+  - serverless-plugin-scripts
+  - serverless-offline
