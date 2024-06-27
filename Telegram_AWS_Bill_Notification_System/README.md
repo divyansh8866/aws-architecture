@@ -1,7 +1,7 @@
 
 # Telegram_AWS_Bill_Notification_System
-**Authors**\
-`By`: Divyansh Patel
+
+`Developer`: Divyansh Patel
 ## Overview
 ![Alt text](doc/diagram.png)
 This project sets up a serverless architecture using AWS Lambda to fetch AWS billing information and publish it to a Telegram channel daily. The Serverless Framework is used to manage the deployment of the Lambda function and its associated IAM role.

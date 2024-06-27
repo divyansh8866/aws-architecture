@@ -1,6 +1,5 @@
-
-**Authors**\
-`By`: Divyansh Patel
+# sqs_to_S3_datapipeline
+`Developer`: Divyansh Patel
 
 **Description**\
 This project is built to consume data from the SQS and pass description of those datas to the api. 

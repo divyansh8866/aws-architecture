@@ -1,4 +1,5 @@
 # Serverless Architecture for Automated S3 File Processing with AWS Lambda and SQS
+`Developer`: Divyansh Patel
 ![Alt text](doc/diagram.png)
 
 This project demonstrates a serverless architecture for processing files uploaded to an Amazon S3 bucket using AWS Lambda and Amazon SQS. The architecture ensures that when a user uploads a file to the S3 bucket, it triggers an event to SQS, which acts as a buffer for high volume data, then processes the file using a Lambda function, and stores the processed file in another S3 bucket.
