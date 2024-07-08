@@ -1,0 +1,19 @@
+{
+    "bucket_1": [
+        {
+            "prefix": "db1/folder/",
+            "timedelta_days": 1
+        },
+        {
+            "prefix": "db1/folder_2/",
+            "timedelta_days": 1
+        }
+    ],
+    "bucket_2":[
+        {
+            "prefix": "db2/folder1/",
+            "timedelta_days": 1
+        }
+
+    ]
+}

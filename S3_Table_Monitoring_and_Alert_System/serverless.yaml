@@ -1,0 +1,34 @@
+service: "S3-Table-Monitoring-and-Alert-System"
+provider:
+  name: aws
+  runtime: python3.9
+  environment:
+    CRON_SCHEDULE: 'cron(0 0 * * ? *)'  # Daily at midnight UTC
+
+
+functions:
+  monitor:
+    handler: handler.monitor
+    environment:
+      TOPIC_ARN:
+        Ref: NotificationTopic
+    events:
+      - schedule: ${self:provider.environment.CRON_SCHEDULE}
+package:
+  exclude:
+    - node_modules/**
+    - package-lock.json
+    - package.json
+resources:
+  Resources:
+    NotificationTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: S3TableMonitoringNotifications
+
+  Outputs:
+    NotificationTopicArn:
+      Value:
+        Ref: NotificationTopic
+      Export:
+        Name: S3TableMonitoringNotificationsTopicArn
