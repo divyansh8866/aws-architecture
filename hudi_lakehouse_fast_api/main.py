@@ -41,7 +41,7 @@ async def fetch_hudi_data(input_data: DivisionIDInput):
         # Use async to improve performance with I/O operations
         loop = asyncio.get_running_loop()
         df = await loop.run_in_executor(None, lambda: daft.read_hudi(s3_path, io_config=io_config))
-        df = df.where(df["division_id"] == input_data.division_id).limit(2)
+        df = df.where(df["pk_column"] == input_data.division_id).limit(2)
         data_dict = df.to_pydict()
         json_data = json.dumps(data_dict, default=str)  # Convert datetimes to strings
 
